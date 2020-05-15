@@ -178,10 +178,15 @@ export class BookComponent implements OnInit, AfterViewInit {
   private overlap(dragToSelectEvent: CalendarEvent) {
     let filteredEvents = this.events.filter((event) => event != dragToSelectEvent);
 
+    let draggedStart = dragToSelectEvent.start.getTime();
+    let draggedEnd = dragToSelectEvent.end.getTime();
+
     return filteredEvents
       .filter(
-        (event) =>
-          event.start.getTime() >= dragToSelectEvent.start.getTime() && event.start.getTime() <= dragToSelectEvent.end.getTime()
+        (event) => {
+          let start = event.start.getTime();
+          return start >= draggedStart && start <= draggedEnd
+        }
       ).length > 0;
   }
 
