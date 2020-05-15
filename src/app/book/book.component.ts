@@ -50,6 +50,7 @@ export class CustomEventTitleFormatter extends CalendarEventTitleFormatter {
 export class BookComponent implements OnInit, AfterViewInit {
 
   isLoading: boolean = true;
+  precision = 15;
 
   @ViewChild('calender') calender: MatCalendar<Date>;
 
@@ -84,7 +85,7 @@ export class BookComponent implements OnInit, AfterViewInit {
   toDate: Date;
   selectedTimezone: string;
   events: CalendarEvent[] = [];
-  stopped: Subject<boolean> = new Subject<boolean>();
+  dragToSelectEvent: CalendarEvent = null;
 
   constructor(private cdr: ChangeDetectorRef) {
     this.now = moment().toDate();
@@ -113,17 +114,22 @@ export class BookComponent implements OnInit, AfterViewInit {
     mouseDownEvent: MouseEvent,
     segmentElement: HTMLElement
   ) {
-    const dragToSelectEvent: CalendarEvent = {
+
+    if (this.dragToSelectEvent != null) {
+      this.events.splice(this.events.length - 1, 1);
+    }
+
+    this.dragToSelectEvent = {
       id: this.events.length,
       title: 'New event',
       start: segment.date,
-      draggable: true,
+      draggable: false,
       meta: {
         tmpEvent: true,
       },
     };
 
-    this.events = [...this.events, dragToSelectEvent];
+    this.events = [...this.events, this.dragToSelectEvent];
 
     const segmentPosition = segmentElement.getBoundingClientRect();
     this.dragToCreateActive = true;
@@ -134,7 +140,7 @@ export class BookComponent implements OnInit, AfterViewInit {
     fromEvent(document, 'mousemove')
       .pipe(
         finalize(() => {
-          delete dragToSelectEvent.meta.tmpEvent;
+          delete this.dragToSelectEvent.meta.tmpEvent;
           this.dragToCreateActive = false;
           this.refresh();
         }),
@@ -142,44 +148,52 @@ export class BookComponent implements OnInit, AfterViewInit {
       )
       .subscribe((mouseMoveEvent: MouseEvent) => {
 
-        console.log('seeeeeeeeee');
-        const minutesDiff = ceilToNearest(
-          mouseMoveEvent.clientY - segmentPosition.top,
-          30
+        let minutesDiff = ceilToNearest(
+          (mouseMoveEvent.clientY - segmentPosition.top) / 2,
+          this.precision
         );
 
-        const daysDiff =
-          floorToNearest(
-            mouseMoveEvent.clientX - segmentPosition.left,
-            segmentPosition.width
-          ) / segmentPosition.width;
+        minutesDiff = Math.min(minutesDiff, 60);
 
-        const newEnd = addDays(addMinutes(segment.date, minutesDiff), daysDiff);
+        const newEnd = addMinutes(segment.date, minutesDiff);
+
         if (newEnd > segment.date && newEnd < endOfView) {
-          dragToSelectEvent.end = newEnd;
+          this.dragToSelectEvent.end = newEnd;
 
-          if (this.overlap(dragToSelectEvent)) {
-            this.events.splice(this.events.length - 1, 1);
-
-            mouseDownEvent.target.dispatchEvent(
-              new MouseEvent('mouseup', {
-                  view: window,
-                  bubbles: true,
-                  cancelable: true
-                }
-              )
-            );
+          if (this.overlap()) {
+            this.stopDragging(mouseDownEvent);
+            this.refresh();
+            return;
           }
         }
+
         this.refresh();
       });
   }
 
-  private overlap(dragToSelectEvent: CalendarEvent) {
-    let filteredEvents = this.events.filter((event) => event != dragToSelectEvent);
+  private isDraggingToDifferentDay() {
+    return this.dragToSelectEvent.end.getDate() != this.dragToSelectEvent.start.getDate();
+  }
 
-    let draggedStart = dragToSelectEvent.start.getTime();
-    let draggedEnd = dragToSelectEvent.end.getTime();
+  private stopDragging(mouseDownEvent: MouseEvent) {
+    this.events.splice(this.events.length - 1, 1);
+
+    mouseDownEvent.target.dispatchEvent(
+      new MouseEvent('mouseup', {
+          view: window,
+          bubbles: true,
+          cancelable: true
+        }
+      )
+    );
+  }
+
+  private overlap() {
+    let filteredEvents = this.events.slice(0, -1);
+    // let filteredEvents = this.events.filter((event) => event != this.dragToSelectEvent);
+
+    let draggedStart = this.dragToSelectEvent.start.getTime();
+    let draggedEnd = this.dragToSelectEvent.end.getTime();
 
     return filteredEvents
       .filter(
