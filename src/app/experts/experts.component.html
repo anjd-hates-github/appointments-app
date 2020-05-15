@@ -1,0 +1,13 @@
+<div *ngIf="isLoading">
+  <mat-progress-spinner mode="indeterminate">
+  </mat-progress-spinner>
+</div>
+
+<mat-grid-list cols="4">
+  <mat-grid-tile
+    *ngFor="let expert of experts"
+    [colspan]="2"
+    [rowspan]="1">
+    <app-expert-digest [expert]="expert"></app-expert-digest>
+  </mat-grid-tile>
+</mat-grid-list>

@@ -1,0 +1,29 @@
+<div *ngIf="isLoading; else expertCard">
+  <mat-progress-spinner mode="indeterminate">
+  </mat-progress-spinner>
+</div>
+
+
+<ng-template #expertCard>
+  <div class="row">
+    <div class="col-lg-6">
+      <mat-card class="example-card">
+        <mat-card-header>
+          <div class="example-header-image" mat-card-avatar></div>
+          <mat-card-title>{{expert.name}}</mat-card-title>
+          <mat-card-subtitle>{{expert.job_title}}</mat-card-subtitle>
+        </mat-card-header>
+        <!--  <img alt="Photo of a Shiba Inu" mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg">-->
+        <mat-card-content>
+          {{expert.country_name}}
+        </mat-card-content>
+        <mat-card-actions>
+          <a [routerLink]="['/book', expert.id]">
+            <button mat-button>Book Now!</button>
+          </a>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+</ng-template>
+
