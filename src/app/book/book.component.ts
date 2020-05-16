@@ -1,12 +1,16 @@
 import {AfterViewInit, ChangeDetectorRef, Component, Injectable, OnInit, ViewChild} from '@angular/core';
 import * as moment from 'moment-timezone';
 import {MatCalendar} from "@angular/material/datepicker";
-import {CalendarEvent} from "calendar-utils";
+import {CalendarEvent, WeekViewHourSegment} from "calendar-utils";
 import {CalendarEventTitleFormatter} from "angular-calendar";
-import {WeekViewHourSegment} from 'calendar-utils';
-import {combineLatest, fromEvent, Observable, Subject} from "rxjs";
-import {filter, finalize, switchAll, takeUntil} from "rxjs/operators";
-import {addDays, addMinutes, endOfWeek} from 'date-fns';
+import {fromEvent, zip} from "rxjs";
+import {finalize, map, takeUntil} from "rxjs/operators";
+import {addMinutes, endOfWeek} from 'date-fns';
+import {ExpertsService} from "../experts.service";
+import {AppointmentsService} from "../appointments.service";
+import {ActivatedRoute} from "@angular/router";
+import {AppointmentModel} from "../models/appointment.model";
+import {WorkingHoursModel} from "../models/working-hours.model";
 
 interface Duration {
   value: number;
@@ -81,13 +85,21 @@ export class BookComponent implements OnInit, AfterViewInit {
 
   weekStartsOn: 0 = 0;
 
-  fromDate: Date;
-  toDate: Date;
+  minDate: Date;
+  maxDate: Date;
   selectedTimezone: string;
   events: CalendarEvent[] = [];
+  workingHours: WorkingHoursModel = null;
   dragToSelectEvent: CalendarEvent = null;
+  isPrevDisabled: boolean = true;
 
-  constructor(private cdr: ChangeDetectorRef) {
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private expertsService: ExpertsService,
+    private appointmentsService: AppointmentsService
+  ) {
     this.now = moment().toDate();
   }
 
@@ -102,6 +114,54 @@ export class BookComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.timezones = moment.tz.names();
+
+
+    this.isLoading = true;
+    let id = this.route.snapshot.params['id'];
+
+    let fetchingWorkingHours$ = this.expertsService.fetchWorkingHours(id);
+    let fetchingAppointments$ = this.expertsService.fetchAppointments(id).pipe(
+      map((appointments: AppointmentModel[]): CalendarEvent[] => {
+        return appointments.map((appointment: AppointmentModel): CalendarEvent => {
+          return {
+            title: appointment.user_name,
+            start: new Date(appointment.starts_at),
+            end: new Date(appointment.ends_at),
+            color: {
+              primary: "#d4cdcd",
+              secondary: "#f1f1f1",
+            },
+            draggable: false,
+            allDay: false,
+            id: appointment.id,
+            resizable: {
+              beforeStart: false,
+              afterEnd: false,
+            },
+            meta: {
+              perSet: true,
+            }
+          };
+        });
+      })
+    );
+    zip(
+      fetchingWorkingHours$,
+      fetchingAppointments$,
+      (workingHoursModel, appointments) => ({workingHoursModel, appointments})
+    ).subscribe((pair) => {
+
+      this.workingHours = pair.workingHoursModel;
+      console.log(this.workingHours);
+
+      this.events = pair.appointments;
+
+      this.minDate = timeToMoment(this.workingHours.starts_at).toDate();
+      this.maxDate = timeToMoment(this.workingHours.ends_at).toDate();
+
+      this.isLoading = false;
+    });
+
   }
 
   ngAfterViewInit(): void {
@@ -114,15 +174,23 @@ export class BookComponent implements OnInit, AfterViewInit {
     mouseDownEvent: MouseEvent,
     segmentElement: HTMLElement
   ) {
+    if (isAfter(this.minDate, segment.date)) {
+      return;
+    }
+
+    if (isAfter(segment.date, this.maxDate)) {
+      return;
+    }
 
     if (this.dragToSelectEvent != null) {
-      this.events.splice(this.events.length - 1, 1);
+      this.events.pop();
     }
 
     this.dragToSelectEvent = {
       id: this.events.length,
       title: 'New event',
       start: segment.date,
+      end: addMinutes(segment.date, this.precision),
       draggable: false,
       meta: {
         tmpEvent: true,
@@ -137,38 +205,103 @@ export class BookComponent implements OnInit, AfterViewInit {
       weekStartsOn: this.weekStartsOn,
     });
 
+    this.updateDraggedEvent(mouseDownEvent, segmentPosition, segment, endOfView, mouseDownEvent);
+
     fromEvent(document, 'mousemove')
       .pipe(
         finalize(() => {
-          delete this.dragToSelectEvent.meta.tmpEvent;
+          if (this.dragToSelectEvent != null && this.isOverlapping()) {
+            this.stopDragging(mouseDownEvent);
+          }
+
+          delete this.dragToSelectEvent?.meta?.tmpEvent;
           this.dragToCreateActive = false;
           this.refresh();
         }),
         takeUntil(fromEvent(document, 'mouseup'))
       )
       .subscribe((mouseMoveEvent: MouseEvent) => {
-
-        let minutesDiff = ceilToNearest(
-          (mouseMoveEvent.clientY - segmentPosition.top) / 2,
-          this.precision
-        );
-
-        minutesDiff = Math.min(minutesDiff, 60);
-
-        const newEnd = addMinutes(segment.date, minutesDiff);
-
-        if (newEnd > segment.date && newEnd < endOfView) {
-          this.dragToSelectEvent.end = newEnd;
-
-          if (this.overlap()) {
-            this.stopDragging(mouseDownEvent);
-            this.refresh();
-            return;
-          }
-        }
-
-        this.refresh();
+        this.updateDraggedEvent(mouseMoveEvent, segmentPosition, segment, endOfView, mouseDownEvent);
       });
+  }
+
+  getStartHour() {
+    let today = moment().toDate();
+
+    if (areDatesEqual(this.viewDate, today)) {
+      return today.getHours();
+    }
+
+    if (this.viewDate < today) {
+      return 0;
+    }
+
+    return this.minDate.getHours();
+  }
+
+  getStartMinute() {
+    let today = moment().toDate();
+
+    if (areDatesEqual(this.viewDate, today)) {
+      return today.getMinutes();
+    }
+
+    if (this.viewDate < today) {
+      return 0;
+    }
+
+    return this.minDate.getMinutes();
+  }
+
+  getEndHour() {
+    let today = moment().toDate();
+
+    if (areDatesEqual(this.viewDate, today)) {
+      return this.maxDate.getHours();
+    }
+
+    if (this.viewDate < today) {
+      return 0;
+    }
+
+    return this.maxDate.getHours();
+  }
+
+  getEndMinute() {
+    let today = moment().toDate();
+
+    if (areDatesEqual(this.viewDate, today)) {
+      return this.maxDate.getMinutes();
+    }
+
+    if (this.viewDate < today) {
+      return 0;
+    }
+
+    return this.maxDate.getMinutes();
+  }
+
+  private updateDraggedEvent(mouseMoveEvent: MouseEvent, segmentPosition: DOMRect, segment: WeekViewHourSegment, endOfView: Date, mouseDownEvent: MouseEvent) {
+    let minutesDiff = ceilToNearest(
+      (mouseMoveEvent.clientY - segmentPosition.top) / 2,
+      this.precision
+    );
+
+    minutesDiff = Math.min(minutesDiff, 60);
+
+    const newEnd = addMinutes(segment.date, minutesDiff);
+
+    if (newEnd > segment.date && newEnd < endOfView) {
+      this.dragToSelectEvent.end = newEnd;
+
+      if (this.isOverlapping()) {
+        this.stopDragging(mouseDownEvent);
+        this.refresh();
+        return;
+      }
+    }
+
+    this.refresh();
   }
 
   private isDraggingToDifferentDay() {
@@ -176,7 +309,8 @@ export class BookComponent implements OnInit, AfterViewInit {
   }
 
   private stopDragging(mouseDownEvent: MouseEvent) {
-    this.events.splice(this.events.length - 1, 1);
+    this.events.pop();
+    this.dragToSelectEvent = null;
 
     mouseDownEvent.target.dispatchEvent(
       new MouseEvent('mouseup', {
@@ -188,9 +322,9 @@ export class BookComponent implements OnInit, AfterViewInit {
     );
   }
 
-  private overlap() {
-    let filteredEvents = this.events.slice(0, -1);
-    // let filteredEvents = this.events.filter((event) => event != this.dragToSelectEvent);
+  private isOverlapping() {
+    let filteredEvents = [...this.events];
+    filteredEvents.pop();
 
     let draggedStart = this.dragToSelectEvent.start.getTime();
     let draggedEnd = this.dragToSelectEvent.end.getTime();
@@ -199,7 +333,8 @@ export class BookComponent implements OnInit, AfterViewInit {
       .filter(
         (event) => {
           let start = event.start.getTime();
-          return start >= draggedStart && start <= draggedEnd
+          let end = event.end.getTime();
+          return (start > draggedStart && start < draggedEnd) || (start < draggedStart && draggedStart < end)
         }
       ).length > 0;
   }
@@ -208,4 +343,38 @@ export class BookComponent implements OnInit, AfterViewInit {
     this.events = [...this.events];
     this.cdr.detectChanges();
   }
+}
+
+
+function timeToMoment(time: string) {
+  let day = moment().tz('GMT');
+  let splitTime = time.split(/:/)
+  day.hours(parseInt(splitTime[0])).minutes(parseInt(splitTime[1])).seconds(parseInt(splitTime[2])).milliseconds(0);
+
+
+  return day;
+}
+
+function isAfter(date1: Date, date2: Date) {
+  if (date1.getHours() > date2.getHours()) {
+    return true;
+  }
+
+  if (date1.getHours() < date2.getHours()) {
+    return false;
+  }
+
+  if (date1.getMinutes() > date2.getMinutes()) {
+    return true;
+  }
+
+  if (date1.getMinutes() < date2.getMinutes()) {
+    return false;
+  }
+
+  return date1.getSeconds() > date2.getSeconds();
+}
+
+function areDatesEqual(date1: Date, date2: Date) {
+  return date1.getDay() === date2.getDay() && date1.getMonth() == date2.getMonth() && date1.getFullYear() === date2.getFullYear();
 }

@@ -1,31 +1,13 @@
-<!--<div *ngIf="isLoading; else expertCard">-->
-<!--  <mat-progress-spinner mode="indeterminate">-->
-<!--  </mat-progress-spinner>-->
-<!--</div>-->
-
-
-<!--<ng-template #expertCard>-->
-<!--
 <div class="row">
-  <div class="col-lg-6">
-    <mat-card class="example-card">
-      <mat-card-header>
-        <div class="example-header-image" mat-card-avatar></div>
-        <mat-card-title>Select Date</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
 
-        <div class="container" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center" fxLayoutGap="0.5%"
-             fxLayoutWrap>
-          <div fxFlex="20%">
-            <mat-card>
-              <mat-calendar #calender (selectedChange)="selectedChanged($event)" [(selected)]="selected"
-                            [minDate]="now">
-              </mat-calendar>
-            </mat-card>
-          </div>
-        </div>
+  <div *ngIf="isLoading; else appointmentsCard">
+    <mat-progress-spinner mode="indeterminate">
+    </mat-progress-spinner>
+  </div>
 
+  <ng-template #appointmentsCard>
+    <div class="row">
+      <div fxFlex="100" fxFlex.sm="49">
         <mat-form-field>
           <mat-label>Timezones</mat-label>
           <mat-select (valueChange)="timezoneChanged($event)">
@@ -34,104 +16,84 @@
           </mat-select>
         </mat-form-field>
 
-        <br>
+        <div>
+          <button mat-button>Book</button>
+        </div>
 
-        <mat-form-field>
-          <mat-label>Duration</mat-label>
-          <mat-select [value]="durations[0].value">
-            <mat-option *ngFor="let duration of durations" [value]="duration.value">{{duration.name}}</mat-option>
-          </mat-select>
-        </mat-form-field>
--->
-<!--
+      </div>
+      <div fxFlex="100" fxFlex.sm="49">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="btn-group">
+              <div
+                [(viewDate)]="viewDate"
+                [view]="'day'"
+                class="btn btn-primary"
+                mwlCalendarPreviousView
+              >
+                Previous
+              </div>
+              <div
+                [(viewDate)]="viewDate"
+                class="btn btn-outline-secondary"
+                mwlCalendarToday
+              >
+                Today
+              </div>
+              <div
+                [(viewDate)]="viewDate"
+                [view]="'day'"
+                class="btn btn-primary"
+                mwlCalendarNextView
+              >
+                Next
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 text-right">
+            <h3>{{ viewDate | calendarDate:('dayViewTitle') }}</h3>
+          </div>
+        </div>
+        <br/>
 
-        <br>
+        <ng-template
+          #weekViewHourSegmentTemplate
+          let-isTimeLabel="isTimeLabel"
+          let-locale="locale"
+          let-segment="segment"
+          let-segmentHeight="segmentHeight"
+        >
+          <div
+            #segmentElement
+            (mousedown)="startDragToCreate(segment, $event, segmentElement)"
+            [class.cal-after-hour-start]="!segment.isStart"
+            [class.cal-hour-start]="segment.isStart"
+            [ngClass]="segment.cssClass"
+            [style.height.px]="segmentHeight"
+            class="cal-hour-segment"
+          >
+            <div *ngIf="isTimeLabel" class="cal-time">
+              {{ segment.date | calendarDate:'weekViewHour':locale }}
+            </div>
+          </div>
+        </ng-template>
 
-        <mwl-calendar-week-view
-          [dayStartHour]="4"
-          [dayEndHour]="10"
-          [hourSegments]="4"
+
+        <mwl-calendar-day-view
+          [dayEndHour]="getEndHour()"
+          [dayEndMinute]="getEndMinute()"
+          [dayStartHour]="getStartHour()"
+          [dayStartMinute]="getStartMinute()"
           [events]="events"
-          [snapDraggedEvents]="true"
-        ></mwl-calendar-week-view>
+          [hourSegmentTemplate]="weekViewHourSegmentTemplate"
+          [hourSegments]="4"
+          [viewDate]="viewDate"
+        >
+        </mwl-calendar-day-view>
 
-        <br>
-
-        {{fromDate}} - {{toDate}}
-
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-button>Book</button>
-      </mat-card-actions>
-    </mat-card>
-  </div>
-</div>
-&lt;!&ndash;</ng-template>&ndash;&gt;
-
--->
-
-
-<div class="row">
-  <div class="col-md-6">
-    <div class="btn-group">
-      <div
-        [(viewDate)]="viewDate"
-        [view]="'day'"
-        class="btn btn-primary"
-        mwlCalendarPreviousView
-      >
-        Previous
-      </div>
-      <div
-        [(viewDate)]="viewDate"
-        class="btn btn-outline-secondary"
-        mwlCalendarToday
-      >
-        Today
-      </div>
-      <div
-        [(viewDate)]="viewDate"
-        [view]="'day'"
-        class="btn btn-primary"
-        mwlCalendarNextView
-      >
-        Next
       </div>
     </div>
-  </div>
-  <div class="col-md-6 text-right">
-    <h3>{{ viewDate | calendarDate:('weekViewTitle') }}</h3>
-  </div>
+
+  </ng-template>
+
 </div>
-<br/>
-
-<ng-template
-  #weekViewHourSegmentTemplate
-  let-isTimeLabel="isTimeLabel"
-  let-locale="locale"
-  let-segment="segment"
-  let-segmentHeight="segmentHeight"
->
-  <div
-    #segmentElement
-    (mousedown)="startDragToCreate(segment, $event, segmentElement)"
-    [class.cal-after-hour-start]="!segment.isStart"
-    [class.cal-hour-start]="segment.isStart"
-    [ngClass]="segment.cssClass"
-    [style.height.px]="segmentHeight"
-    class="cal-hour-segment"
-  >
-    <div *ngIf="isTimeLabel" class="cal-time">
-      {{ segment.date | calendarDate:'weekViewHour':locale }}
-    </div>
-  </div>
-</ng-template>
-
-<mwl-calendar-week-view
-  [events]="events"
-  [hourSegmentTemplate]="weekViewHourSegmentTemplate"
-  [viewDate]="viewDate"
-  [hourSegments]="4"
-  [weekStartsOn]="weekStartsOn"
->
-</mwl-calendar-week-view>

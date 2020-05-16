@@ -19,7 +19,7 @@ export class ExpertComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoading = true;
-    let id = this.route.snapshot.paramMap.get('id');
+    let id = this.route.snapshot.params.get('id');
     this.expertsService.fetchExpert(id).subscribe((val) => {
       this.expert = val;
       console.log(this.expert);
