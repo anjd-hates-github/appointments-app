@@ -8,16 +8,25 @@
   <ng-template #appointmentsCard>
     <div class="row">
       <div fxFlex="100" fxFlex.sm="49">
+
+        <mat-form-field>
+          <mat-label>Name</mat-label>
+          <input matInput placeholder="Your name" [(ngModel)]="name">
+        </mat-form-field>
+
+        <br>
+
         <mat-form-field>
           <mat-label>Timezones</mat-label>
-          <mat-select (valueChange)="timezoneChanged($event)">
+          <mat-select (valueChange)="timezoneChanged($event)" [(value)]="selectedTimezone">
             <mat-option [value]="null">Your timezone</mat-option>
             <mat-option *ngFor="let timezone of timezones" [value]="timezone">{{timezone}}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <div>
-          <button mat-button>Book</button>
+          <button mat-button [disabled]="dragToSelectEvent === null" (click)="bookAppointment()">Book</button>
+          <button mat-button (click)="loadData()">Refresh</button>
         </div>
 
       </div>
@@ -57,7 +66,7 @@
         <br/>
 
         <ng-template
-          #weekViewHourSegmentTemplate
+          #dayViewHourSegmentTemplate
           let-isTimeLabel="isTimeLabel"
           let-locale="locale"
           let-segment="segment"
@@ -73,11 +82,16 @@
             class="cal-hour-segment"
           >
             <div *ngIf="isTimeLabel" class="cal-time">
-              {{ segment.date | calendarDate:'weekViewHour':locale }}
+              {{ segment.date | calendarDate:'dayViewHour':locale }}
             </div>
           </div>
         </ng-template>
 
+
+        <ng-template
+          #marker
+        >
+        </ng-template>
 
         <mwl-calendar-day-view
           [dayEndHour]="getEndHour()"
@@ -85,9 +99,10 @@
           [dayStartHour]="getStartHour()"
           [dayStartMinute]="getStartMinute()"
           [events]="events"
-          [hourSegmentTemplate]="weekViewHourSegmentTemplate"
+          [hourSegmentTemplate]="dayViewHourSegmentTemplate"
           [hourSegments]="4"
           [viewDate]="viewDate"
+          [currentTimeMarkerTemplate]="marker"
         >
         </mwl-calendar-day-view>
 

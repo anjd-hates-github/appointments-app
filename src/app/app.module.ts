@@ -21,6 +21,10 @@ import {FlexLayoutModule} from '@angular/flex-layout';
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/moment';
 import * as moment from 'moment';
+import {MatSnackBarModule} from "@angular/material/snack-bar";
+import {MatFormFieldModule} from "@angular/material/form-field";
+import {MatInput, MatInputModule} from "@angular/material/input";
+import {FormsModule} from "@angular/forms";
 
 export function momentAdapterFactory() {
   return adapterFactory(moment);
@@ -47,8 +51,13 @@ export function momentAdapterFactory() {
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
+
     FlexLayoutModule,
-    CalendarModule.forRoot({ provide: DateAdapter, useFactory: momentAdapterFactory }),
+    CalendarModule.forRoot({provide: DateAdapter, useFactory: momentAdapterFactory}),
+    FormsModule,
   ],
   providers: [
     MatDatepickerModule,

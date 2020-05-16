@@ -1,9 +1,7 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ExpertModel} from "../models/expert.model";
-import {ActivatedRoute, RouterStateSnapshot} from "@angular/router";
-import {ArgumentOutOfRangeError} from "rxjs";
+import {ActivatedRoute} from "@angular/router";
 import {ExpertsService} from "../experts.service";
-import {map} from "rxjs/operators";
 
 @Component({
   selector: 'app-expert',
@@ -19,7 +17,8 @@ export class ExpertComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoading = true;
-    let id = this.route.snapshot.params.get('id');
+    console.log(this.route.snapshot.params['id']);
+    let id = this.route.snapshot.params['id'];
     this.expertsService.fetchExpert(id).subscribe((val) => {
       this.expert = val;
       console.log(this.expert);

@@ -1,5 +1,5 @@
 export interface AppointmentModel {
-  id: number;
+  id?: number;
   user_name: string;
   starts_at: Date;
   ends_at: Date;

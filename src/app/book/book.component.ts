@@ -1,4 +1,4 @@
-import {AfterViewInit, ChangeDetectorRef, Component, Injectable, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, Injectable, OnInit, ViewChild} from '@angular/core';
 import * as moment from 'moment-timezone';
 import {MatCalendar} from "@angular/material/datepicker";
 import {CalendarEvent, WeekViewHourSegment} from "calendar-utils";
@@ -11,6 +11,9 @@ import {AppointmentsService} from "../appointments.service";
 import {ActivatedRoute} from "@angular/router";
 import {AppointmentModel} from "../models/appointment.model";
 import {WorkingHoursModel} from "../models/working-hours.model";
+import {BookAppointmentModel} from "../models/book-appointment.model";
+import {MatSnackBar} from "@angular/material/snack-bar";
+import {Moment} from "moment-timezone/moment-timezone";
 
 interface Duration {
   value: number;
@@ -51,7 +54,7 @@ export class CustomEventTitleFormatter extends CalendarEventTitleFormatter {
     },
   ],
 })
-export class BookComponent implements OnInit, AfterViewInit {
+export class BookComponent implements OnInit {
 
   isLoading: boolean = true;
   precision = 15;
@@ -59,27 +62,8 @@ export class BookComponent implements OnInit, AfterViewInit {
   @ViewChild('calender') calender: MatCalendar<Date>;
 
   timezones = [];
-  selected: moment.Moment;
   now: Date;
-  durations: Duration[] = [
-    {
-      value: 15,
-      name: "15 minutes"
-    },
-    {
-      value: 30,
-      name: "30 minutes"
-    },
-    {
-      value: 45,
-      name: "45 minutes"
-    },
-    {
-      value: 60,
-      name: "1 hours"
-    },
-  ];
-  viewDate = new Date();
+  viewDate: Date;
 
   dragToCreateActive = false;
 
@@ -88,97 +72,65 @@ export class BookComponent implements OnInit, AfterViewInit {
   minDate: Date;
   maxDate: Date;
   selectedTimezone: string;
+  // selectedTimezone: string = 'Asia/Chita';
   events: CalendarEvent[] = [];
   workingHours: WorkingHoursModel = null;
   dragToSelectEvent: CalendarEvent = null;
-  isPrevDisabled: boolean = true;
-
+  expertId: number;
+  /*
+    get filteredEvents() {
+      const today = this.getNow();
+      return this.events.map((event) => {
+        return {}
+      }).filter((event) => {
+      });
+    }
+  */
+  name: string = '';
 
   constructor(
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private expertsService: ExpertsService,
-    private appointmentsService: AppointmentsService
-  ) {
-    this.now = moment().toDate();
+    private appointmentsService: AppointmentsService,
+    private _snackBar: MatSnackBar) {
+
+    this.selectedTimezone = moment.tz.guess();
+    this.now = momentTzToDate(moment().tz(this.selectedTimezone));
+    this.viewDate = momentTzToDate(moment().tz(this.selectedTimezone));
+  }
+
+  get viewDateTz() {
+    return momentTzToDate(moment(this.viewDate).tz(this.selectedTimezone));
   }
 
   timezoneChanged(val: string) {
     this.selectedTimezone = val;
-  }
+    this.now = momentTzToDate(moment().tz(this.selectedTimezone));
+    this.viewDate = momentTzToDate(moment().tz(this.selectedTimezone));
 
-  selectedChanged($event) {
-    let date = moment($event);
-    console.log(date.date());
+    this.loadData();
   }
 
   ngOnInit(): void {
     this.timezones = moment.tz.names();
+    this.expertId = this.route.snapshot.params['id'];
 
-
-    this.isLoading = true;
-    let id = this.route.snapshot.params['id'];
-
-    let fetchingWorkingHours$ = this.expertsService.fetchWorkingHours(id);
-    let fetchingAppointments$ = this.expertsService.fetchAppointments(id).pipe(
-      map((appointments: AppointmentModel[]): CalendarEvent[] => {
-        return appointments.map((appointment: AppointmentModel): CalendarEvent => {
-          return {
-            title: appointment.user_name,
-            start: new Date(appointment.starts_at),
-            end: new Date(appointment.ends_at),
-            color: {
-              primary: "#d4cdcd",
-              secondary: "#f1f1f1",
-            },
-            draggable: false,
-            allDay: false,
-            id: appointment.id,
-            resizable: {
-              beforeStart: false,
-              afterEnd: false,
-            },
-            meta: {
-              perSet: true,
-            }
-          };
-        });
-      })
-    );
-    zip(
-      fetchingWorkingHours$,
-      fetchingAppointments$,
-      (workingHoursModel, appointments) => ({workingHoursModel, appointments})
-    ).subscribe((pair) => {
-
-      this.workingHours = pair.workingHoursModel;
-      console.log(this.workingHours);
-
-      this.events = pair.appointments;
-
-      this.minDate = timeToMoment(this.workingHours.starts_at).toDate();
-      this.maxDate = timeToMoment(this.workingHours.ends_at).toDate();
-
-      this.isLoading = false;
-    });
-
+    this.loadData();
   }
-
-  ngAfterViewInit(): void {
-    // this.calender.currentView = 'year';
-  }
-
 
   startDragToCreate(
     segment: WeekViewHourSegment,
     mouseDownEvent: MouseEvent,
     segmentElement: HTMLElement
   ) {
-    if (isAfter(this.minDate, segment.date)) {
+    let start = segment.date;
+
+    if (isAfter(this.minDate, start)) {
       return;
     }
 
-    if (isAfter(segment.date, this.maxDate)) {
+    if (isAfter(start, this.maxDate)) {
       return;
     }
 
@@ -188,9 +140,9 @@ export class BookComponent implements OnInit, AfterViewInit {
 
     this.dragToSelectEvent = {
       id: this.events.length,
-      title: 'New event',
-      start: segment.date,
-      end: addMinutes(segment.date, this.precision),
+      title: this.name,
+      start: start,
+      end: addMinutes(start, this.precision),
       draggable: false,
       meta: {
         tmpEvent: true,
@@ -226,13 +178,14 @@ export class BookComponent implements OnInit, AfterViewInit {
   }
 
   getStartHour() {
-    let today = moment().toDate();
+    let now = this.getNow();
 
-    if (areDatesEqual(this.viewDate, today)) {
-      return today.getHours();
+
+    if (areDatesEqual(this.viewDate, now)) {
+      return now.getHours();
     }
 
-    if (this.viewDate < today) {
+    if (this.viewDate < now) {
       return 0;
     }
 
@@ -240,7 +193,7 @@ export class BookComponent implements OnInit, AfterViewInit {
   }
 
   getStartMinute() {
-    let today = moment().toDate();
+    let today = this.getNow();
 
     if (areDatesEqual(this.viewDate, today)) {
       return today.getMinutes();
@@ -254,7 +207,7 @@ export class BookComponent implements OnInit, AfterViewInit {
   }
 
   getEndHour() {
-    let today = moment().toDate();
+    let today = this.getNow();
 
     if (areDatesEqual(this.viewDate, today)) {
       return this.maxDate.getHours();
@@ -268,7 +221,7 @@ export class BookComponent implements OnInit, AfterViewInit {
   }
 
   getEndMinute() {
-    let today = moment().toDate();
+    let today = this.getNow();
 
     if (areDatesEqual(this.viewDate, today)) {
       return this.maxDate.getMinutes();
@@ -279,6 +232,90 @@ export class BookComponent implements OnInit, AfterViewInit {
     }
 
     return this.maxDate.getMinutes();
+  }
+
+  bookAppointment() {
+    let appointment: BookAppointmentModel = {
+      starts_at: momentTzToDate(moment(this.dragToSelectEvent.start).tz(this.selectedTimezone)),
+      duration: moment(this.dragToSelectEvent.end).diff(moment(this.dragToSelectEvent.start), 'minutes'),
+      user_name: this.name,
+      expert_id: this.expertId,
+    };
+
+    if (this.selectedTimezone) {
+      appointment.timezone = this.selectedTimezone;
+    }
+
+    this.appointmentsService.book(appointment).subscribe((msg) => {
+      this._snackBar.open(msg.message, null, {
+        duration: 5000,
+      });
+    });
+  }
+
+  loadData() {
+    this.isLoading = true;
+    let fetchingWorkingHours$ = this.expertsService.fetchWorkingHours(this.expertId, this.selectedTimezone);
+    let fetchingAppointments$ = this.expertsService.fetchAppointments(this.expertId, this.selectedTimezone).pipe(
+      map((appointments: AppointmentModel[]): CalendarEvent[] => {
+        return appointments.map((appointment: AppointmentModel): CalendarEvent => {
+          console.log(appointment.user_name);
+
+          let start = momentTzToDate(moment(appointment.starts_at).tz(this.selectedTimezone));
+          let end = momentTzToDate(moment(appointment.ends_at).tz(this.selectedTimezone));
+
+          console.log(start);
+          console.log(end);
+
+          return {
+            title: appointment.user_name,
+            start: start,
+            end: end,
+            color: {
+              primary: "#d4cdcd",
+              secondary: "#f1f1f1",
+            },
+            draggable: false,
+            allDay: false,
+            id: appointment.id,
+            resizable: {
+              beforeStart: false,
+              afterEnd: false,
+            },
+            meta: {
+              perSet: true,
+            }
+          };
+        });
+      })
+    );
+    zip(
+      fetchingWorkingHours$,
+      fetchingAppointments$,
+      (workingHoursModel, appointments) => ({workingHoursModel, appointments})
+    ).subscribe((pair) => {
+
+      this.workingHours = pair.workingHoursModel;
+      this.events = pair.appointments;
+
+      this.minDate = this.timeToMoment(this.workingHours.starts_at);
+      this.maxDate = this.timeToMoment(this.workingHours.ends_at);
+
+      this.isLoading = false;
+    });
+  }
+
+  timeToMoment(time: string) {
+    let day = moment().tz(this.selectedTimezone);
+
+    let splitTime = time.split(/:/)
+    day.hours(parseInt(splitTime[0])).minutes(parseInt(splitTime[1])).seconds(parseInt(splitTime[2])).milliseconds(0);
+
+    return momentTzToDate(day);
+  }
+
+  private getNow() {
+    return momentTzToDate(moment().tz(this.selectedTimezone));
   }
 
   private updateDraggedEvent(mouseMoveEvent: MouseEvent, segmentPosition: DOMRect, segment: WeekViewHourSegment, endOfView: Date, mouseDownEvent: MouseEvent) {
@@ -346,15 +383,6 @@ export class BookComponent implements OnInit, AfterViewInit {
 }
 
 
-function timeToMoment(time: string) {
-  let day = moment().tz('GMT');
-  let splitTime = time.split(/:/)
-  day.hours(parseInt(splitTime[0])).minutes(parseInt(splitTime[1])).seconds(parseInt(splitTime[2])).milliseconds(0);
-
-
-  return day;
-}
-
 function isAfter(date1: Date, date2: Date) {
   if (date1.getHours() > date2.getHours()) {
     return true;
@@ -377,4 +405,8 @@ function isAfter(date1: Date, date2: Date) {
 
 function areDatesEqual(date1: Date, date2: Date) {
   return date1.getDay() === date2.getDay() && date1.getMonth() == date2.getMonth() && date1.getFullYear() === date2.getFullYear();
+}
+
+function momentTzToDate(moment: Moment) {
+  return new Date(moment.year(), moment.month(), moment.date(), moment.hours(), moment.minutes(), moment.seconds(), moment.milliseconds());
 }

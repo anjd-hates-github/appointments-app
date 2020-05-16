@@ -23,19 +23,29 @@ export class ExpertsService {
   }
 
   fetchExpert(id: string): Observable<ExpertModel> {
-    return this.client.get<ResponseModel<ExpertModel>>(`${this.url}/experts/${id}`)
-      .pipe(
-        map(val => val.data)
-      );
+    return this.client.get<ExpertModel>(`${this.url}/experts/${id}`);
   }
 
-  fetchAppointments(id: string): Observable<AppointmentModel[]> {
-    return this.client.get<AppointmentModel[]>(`${this.url}/experts/${id}/appointments`);
+  fetchAppointments(id: number, timezone?: string): Observable<AppointmentModel[]> {
+    let url = `${this.url}/experts/${id}/appointments`;
+
+    if (timezone) {
+      url += `?timezone=${timezone}`;
+    }
+
+    return this.client.get<AppointmentModel[]>(url);
   }
 
-  fetchWorkingHours(id: string): Observable<WorkingHoursModel> {
-    return this.client.get<WorkingHoursModel>(`${this.url}/experts/${id}/working-hours`).pipe(
-      tap((item) => {console.log(item);})
+  fetchWorkingHours(id: number, timezone?: string): Observable<WorkingHoursModel> {
+    let url = `${this.url}/experts/${id}/working-hours`;
+    if (timezone) {
+      url += `?timezone=${timezone}`;
+    }
+
+    return this.client.get<WorkingHoursModel>(url).pipe(
+      tap((item) => {
+        console.log(item);
+      })
     );
   }
 
