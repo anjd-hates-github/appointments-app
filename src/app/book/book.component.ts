@@ -15,6 +15,8 @@ import {BookAppointmentModel} from "../models/book-appointment.model";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Moment} from "moment-timezone/moment-timezone";
 
+moment.tz.link('Europe/London');
+
 interface Duration {
   value: number;
   name: string;
@@ -69,23 +71,16 @@ export class BookComponent implements OnInit {
 
   weekStartsOn: 0 = 0;
 
+  error: string = null;
+
   minDate: Date;
   maxDate: Date;
   selectedTimezone: string;
-  // selectedTimezone: string = 'Asia/Chita';
+  // selectedTimezone: string = 'Europe/London';
   events: CalendarEvent[] = [];
   workingHours: WorkingHoursModel = null;
   dragToSelectEvent: CalendarEvent = null;
   expertId: number;
-  /*
-    get filteredEvents() {
-      const today = this.getNow();
-      return this.events.map((event) => {
-        return {}
-      }).filter((event) => {
-      });
-    }
-  */
   name: string = '';
 
   constructor(
@@ -98,10 +93,6 @@ export class BookComponent implements OnInit {
     this.selectedTimezone = moment.tz.guess();
     this.now = momentTzToDate(moment().tz(this.selectedTimezone));
     this.viewDate = momentTzToDate(moment().tz(this.selectedTimezone));
-  }
-
-  get viewDateTz() {
-    return momentTzToDate(moment(this.viewDate).tz(this.selectedTimezone));
   }
 
   timezoneChanged(val: string) {
@@ -235,8 +226,11 @@ export class BookComponent implements OnInit {
   }
 
   bookAppointment() {
+    let london = moment(this.dragToSelectEvent.start).tz(this.selectedTimezone, true);
+    let start = london.tz(moment.tz.guess());
+
     let appointment: BookAppointmentModel = {
-      starts_at: momentTzToDate(moment(this.dragToSelectEvent.start).tz(this.selectedTimezone)),
+      starts_at: start.toDate(),
       duration: moment(this.dragToSelectEvent.end).diff(moment(this.dragToSelectEvent.start), 'minutes'),
       user_name: this.name,
       expert_id: this.expertId,
@@ -252,6 +246,9 @@ export class BookComponent implements OnInit {
       });
 
       this.loadData();
+    }, (error) => {
+      console.error(error);
+      this.error = error.error.message;
     });
   }
 
@@ -261,13 +258,11 @@ export class BookComponent implements OnInit {
     let fetchingAppointments$ = this.expertsService.fetchAppointments(this.expertId, this.selectedTimezone).pipe(
       map((appointments: AppointmentModel[]): CalendarEvent[] => {
         return appointments.map((appointment: AppointmentModel): CalendarEvent => {
-          console.log(appointment.user_name);
+          let start = momentTzToDate(moment(appointment.starts_at));
+          let end = momentTzToDate(moment(appointment.ends_at));
 
-          let start = momentTzToDate(moment(appointment.starts_at).tz(this.selectedTimezone));
-          let end = momentTzToDate(moment(appointment.ends_at).tz(this.selectedTimezone));
-
+          console.log(appointment.starts_at);
           console.log(start);
-          console.log(end);
 
           return {
             title: appointment.user_name,
@@ -295,16 +290,19 @@ export class BookComponent implements OnInit {
       fetchingWorkingHours$,
       fetchingAppointments$,
       (workingHoursModel, appointments) => ({workingHoursModel, appointments})
-    ).subscribe((pair) => {
+    )
+      .subscribe((pair) => {
 
-      this.workingHours = pair.workingHoursModel;
-      this.events = pair.appointments;
+        this.workingHours = pair.workingHoursModel;
+        this.events = pair.appointments;
 
-      this.minDate = this.timeToMoment(this.workingHours.starts_at);
-      this.maxDate = this.timeToMoment(this.workingHours.ends_at);
+        this.minDate = this.timeToMoment(this.workingHours.starts_at);
+        this.maxDate = this.timeToMoment(this.workingHours.ends_at);
 
-      this.isLoading = false;
-    });
+        this.isLoading = false;
+      }, (error) => {
+        this.error = error;
+      });
   }
 
   timeToMoment(time: string) {
@@ -318,6 +316,14 @@ export class BookComponent implements OnInit {
 
   canBook() {
     return this.dragToSelectEvent !== null && this.name != null && this.name.length > 6;
+  }
+
+  updateNameOfEvent() {
+    if (!this.dragToSelectEvent) {
+      return;
+    }
+
+    this.dragToSelectEvent.title = this.name;
   }
 
   private getNow() {
@@ -385,14 +391,6 @@ export class BookComponent implements OnInit {
   private refresh() {
     this.events = [...this.events];
     this.cdr.detectChanges();
-  }
-
-  updateNameOfEvent() {
-    if (!this.dragToSelectEvent) {
-      return;
-    }
-
-    this.dragToSelectEvent.title = this.name;
   }
 }
 
