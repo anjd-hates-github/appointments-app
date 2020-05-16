@@ -6,12 +6,15 @@
 
   <div *ngIf="error">
     {{error}}
+    <br>
   </div>
+
 
   <div *ngIf="isLoading; else appointmentsCard">
     <mat-progress-spinner mode="indeterminate">
     </mat-progress-spinner>
   </div>
+  <br>
 
   <ng-template #appointmentsCard>
     <div class="row">
@@ -24,6 +27,8 @@
         </mat-form-field>
 
         <br>
+        <br>
+
 
         <mat-form-field>
           <mat-label>Timezones</mat-label>
@@ -43,29 +48,9 @@
         <div class="row">
           <div class="col-md-6">
             <div class="btn-group">
-              <div
-                [(viewDate)]="viewDate"
-                [view]="'day'"
-                class="btn btn-primary"
-                mwlCalendarPreviousView
-              >
-                Previous
-              </div>
-              <div
-                [(viewDate)]="viewDate"
-                class="btn btn-outline-secondary"
-                mwlCalendarToday
-              >
-                Today
-              </div>
-              <div
-                [(viewDate)]="viewDate"
-                [view]="'day'"
-                class="btn btn-primary"
-                mwlCalendarNextView
-              >
-                Next
-              </div>
+              <button [(viewDate)]="viewDate" [view]="'day'" mat-button mwlCalendarPreviousView>Previous</button>
+              <button [(viewDate)]="viewDate" mat-button mwlCalendarToday>Today</button>
+              <button [(viewDate)]="viewDate" [view]="'day'" mat-button mwlCalendarNextView>Next</button>
             </div>
           </div>
           <div class="col-md-6 text-right">
