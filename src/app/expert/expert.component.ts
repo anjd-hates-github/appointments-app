@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ExpertModel} from "../models/expert.model";
 import {ActivatedRoute} from "@angular/router";
-import {ExpertsService} from "../experts.service";
+import {ExpertsService} from "../services/experts.service";
 
 @Component({
   selector: 'app-expert',

@@ -1,12 +1,12 @@
 import {Injectable} from '@angular/core';
-import {ExpertModel} from "./models/expert.model";
+import {ExpertModel} from "../models/expert.model";
 import {HttpClient} from "@angular/common/http";
-import {environment} from "../environments/environment";
+import {environment} from "../../environments/environment";
 import {Observable} from "rxjs";
-import {ResponseModel} from "./models/response.model";
+import {ResponseModel} from "../models/response.model";
 import {map, tap} from "rxjs/operators";
-import {AppointmentModel} from "./models/appointment.model";
-import {WorkingHoursModel} from "./models/working-hours.model";
+import {AppointmentModel} from "../models/appointment.model";
+import {WorkingHoursModel} from "../models/working-hours.model";
 
 @Injectable({
   providedIn: 'root'
