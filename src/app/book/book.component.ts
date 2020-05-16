@@ -250,6 +250,8 @@ export class BookComponent implements OnInit {
       this._snackBar.open(msg.message, null, {
         duration: 5000,
       });
+
+      this.loadData();
     });
   }
 
@@ -312,6 +314,10 @@ export class BookComponent implements OnInit {
     day.hours(parseInt(splitTime[0])).minutes(parseInt(splitTime[1])).seconds(parseInt(splitTime[2])).milliseconds(0);
 
     return momentTzToDate(day);
+  }
+
+  canBook() {
+    return this.dragToSelectEvent !== null && this.name != null && this.name.length > 6;
   }
 
   private getNow() {
@@ -379,6 +385,14 @@ export class BookComponent implements OnInit {
   private refresh() {
     this.events = [...this.events];
     this.cdr.detectChanges();
+  }
+
+  updateNameOfEvent() {
+    if (!this.dragToSelectEvent) {
+      return;
+    }
+
+    this.dragToSelectEvent.title = this.name;
   }
 }
 

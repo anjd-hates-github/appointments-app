@@ -11,7 +11,8 @@
 
         <mat-form-field>
           <mat-label>Name</mat-label>
-          <input matInput placeholder="Your name" [(ngModel)]="name">
+          <input matInput placeholder="Your name" [(ngModel)]="name" (ngModelChange)="updateNameOfEvent()">
+          <mat-hint>At least 6 characters</mat-hint>
         </mat-form-field>
 
         <br>
@@ -25,7 +26,7 @@
         </mat-form-field>
 
         <div>
-          <button mat-button [disabled]="dragToSelectEvent === null" (click)="bookAppointment()">Book</button>
+          <button mat-button [disabled]="!canBook()" (click)="bookAppointment()">Book</button>
           <button mat-button (click)="loadData()">Refresh</button>
         </div>
 
