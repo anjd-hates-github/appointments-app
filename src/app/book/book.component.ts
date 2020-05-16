@@ -261,9 +261,6 @@ export class BookComponent implements OnInit {
           let start = momentTzToDate(moment(appointment.starts_at));
           let end = momentTzToDate(moment(appointment.ends_at));
 
-          console.log(appointment.starts_at);
-          console.log(start);
-
           return {
             title: appointment.user_name,
             start: start,
@@ -292,6 +289,7 @@ export class BookComponent implements OnInit {
       (workingHoursModel, appointments) => ({workingHoursModel, appointments})
     )
       .subscribe((pair) => {
+        this.dragToSelectEvent = null;
 
         this.workingHours = pair.workingHoursModel;
         this.events = pair.appointments;
