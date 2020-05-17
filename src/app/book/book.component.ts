@@ -171,55 +171,40 @@ export class BookComponent implements OnInit {
   getStartHour() {
     let now = this.getNow();
 
-
-    if (areDatesEqual(this.viewDate, now)) {
+    if (this.minDate < now) {
       return now.getHours();
-    }
-
-    if (this.viewDate < now) {
-      return 0;
     }
 
     return this.minDate.getHours();
   }
 
   getStartMinute() {
-    let today = this.getNow();
+    let now = this.getNow();
 
-    if (areDatesEqual(this.viewDate, today)) {
-      return today.getMinutes();
-    }
-
-    if (this.viewDate < today) {
-      return 0;
+    if (this.minDate < now) {
+      return now.getMinutes();
     }
 
     return this.minDate.getMinutes();
   }
 
   getEndHour() {
-    let today = this.getNow();
+    let now = this.getNow();
 
-    if (areDatesEqual(this.viewDate, today)) {
-      return this.maxDate.getHours();
-    }
 
-    if (this.viewDate < today) {
-      return 0;
+    if (this.maxDate < now) {
+      return now.getHours();
     }
 
     return this.maxDate.getHours();
   }
 
   getEndMinute() {
-    let today = this.getNow();
+    let now = this.getNow();
 
-    if (areDatesEqual(this.viewDate, today)) {
-      return this.maxDate.getMinutes();
-    }
 
-    if (this.viewDate < today) {
-      return 0;
+    if (this.maxDate < now) {
+      return now.getMinutes();
     }
 
     return this.maxDate.getMinutes();
