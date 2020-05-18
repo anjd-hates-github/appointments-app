@@ -1,108 +1,108 @@
-<div class="row">
-
-  <a routerLink="/experts">Back to experts</a>
-
-  <br>
-
-  <div *ngIf="error">
-    {{error}}
-    <br>
+<div class="container" fxFlex fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="5%">
+  <div fxFlex="20">
+    <a routerLink="/experts">Back to experts</a>
   </div>
 
+  <div *ngIf="error" fxFlex="20">
+    {{error}}
+  </div>
 
-  <div *ngIf="isLoading; else appointmentsCard">
+  <div *ngIf="isLoading; else appointmentsCard" fxFlex="50">
     <mat-progress-spinner mode="indeterminate">
     </mat-progress-spinner>
   </div>
-  <br>
 
   <ng-template #appointmentsCard>
-    <div class="row">
-      <div fxFlex="100" fxFlex.sm="49">
+    <div class="container" fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutAlign="center center"
+         fxLayoutGap="5%">
+      <div fxFlex="45" fxFlex.sm="100">
+        <div class="container" fxLayout="column" fxLayoutAlign="center center">
+          <mat-form-field fxFill>
+            <mat-label>Name</mat-label>
+            <input (ngModelChange)="updateNameOfEvent()" [(ngModel)]="name" matInput placeholder="Your name">
+            <mat-hint>At least 6 characters</mat-hint>
+          </mat-form-field>
 
-        <mat-form-field>
-          <mat-label>Name</mat-label>
-          <input (ngModelChange)="updateNameOfEvent()" [(ngModel)]="name" matInput placeholder="Your name">
-          <mat-hint>At least 6 characters</mat-hint>
-        </mat-form-field>
+          <br>
 
-        <br>
-        <br>
+          <mat-form-field fxFill>
+            <mat-label>Timezones</mat-label>
+            <mat-select (valueChange)="timezoneChanged($event)" [(value)]="selectedTimezone">
+              <mat-option [value]="null">Your timezone</mat-option>
+              <mat-option *ngFor="let timezone of timezones" [value]="timezone">{{timezone}}</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-
-        <mat-form-field>
-          <mat-label>Timezones</mat-label>
-          <mat-select (valueChange)="timezoneChanged($event)" [(value)]="selectedTimezone">
-            <mat-option [value]="null">Your timezone</mat-option>
-            <mat-option *ngFor="let timezone of timezones" [value]="timezone">{{timezone}}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <div>
-          <button (click)="bookAppointment()" [disabled]="!canBook()" mat-button>Book</button>
-          <button (click)="loadData()" mat-button>Refresh</button>
+          <div>
+            <button (click)="bookAppointment()" [disabled]="!canBook()" mat-button>Book</button>
+            <button (click)="loadData()" mat-button>Refresh</button>
+          </div>
         </div>
-
       </div>
-      <div fxFlex="100" fxFlex.sm="49">
-        <div class="row">
-          <div class="col-md-6">
-            <div class="btn-group">
-              <button [(viewDate)]="viewDate" [view]="'day'" mat-button mwlCalendarPreviousView>Previous</button>
+
+      <div fxFlex="45" fxFlex.sm="100">
+        <div fxLayout="column" fxLayoutAlign="space-around center">
+          <div fxLayout="row" fxLayoutAlign="space-between center">
+            <div>
+              <button [(viewDate)]="viewDate" [view]="'day'" mat-button mwlCalendarPreviousView>Previous Day</button>
+            </div>
+
+            <div>
               <button [(viewDate)]="viewDate" mat-button mwlCalendarToday>Today</button>
-              <button [(viewDate)]="viewDate" [view]="'day'" mat-button mwlCalendarNextView>Next</button>
+            </div>
+
+            <div>
+              <button [(viewDate)]="viewDate" [view]="'day'" mat-button mwlCalendarNextView>Next Day</button>
             </div>
           </div>
-          <div class="col-md-6 text-right">
+
+          <div fxFill>
             <h3>{{ viewDate | calendarDate:('dayViewTitle') }}</h3>
           </div>
-        </div>
-        <br/>
 
-        <ng-template
-          #dayViewHourSegmentTemplate
-          let-isTimeLabel="isTimeLabel"
-          let-locale="locale"
-          let-segment="segment"
-          let-segmentHeight="segmentHeight"
-        >
-          <div
-            #segmentElement
-            (mousedown)="startDragToCreate(segment, $event, segmentElement)"
-            [class.cal-after-hour-start]="!segment.isStart"
-            [class.cal-hour-start]="segment.isStart"
-            [ngClass]="segment.cssClass"
-            [style.height.px]="segmentHeight"
-            class="cal-hour-segment"
-          >
-            <div *ngIf="isTimeLabel" class="cal-time">
-              {{ segment.date | calendarDate:'dayViewHour':locale }}
-            </div>
+          <div fxFill>
+
+            <ng-template
+              #dayViewHourSegmentTemplate
+              let-isTimeLabel="isTimeLabel"
+              let-locale="locale"
+              let-segment="segment"
+              let-segmentHeight="segmentHeight"
+            >
+              <div
+                #segmentElement
+                (mousedown)="startDragToCreate(segment, $event, segmentElement)"
+                [class.cal-after-hour-start]="!segment.isStart"
+                [class.cal-hour-start]="segment.isStart"
+                [ngClass]="segment.cssClass"
+                [style.height.px]="segmentHeight"
+                class="cal-hour-segment"
+              >
+                <div *ngIf="isTimeLabel" class="cal-time">
+                  {{ segment.date | calendarDate:'dayViewHour':locale }}
+                </div>
+              </div>
+            </ng-template>
+
+
+            <ng-template #marker>
+            </ng-template>
+
+            <mwl-calendar-day-view
+              [currentTimeMarkerTemplate]="marker"
+              [dayEndHour]="getEndHour()"
+              [dayEndMinute]="getEndMinute()"
+              [dayStartHour]="getStartHour()"
+              [dayStartMinute]="getStartMinute()"
+              [events]="events"
+              [hourSegmentTemplate]="dayViewHourSegmentTemplate"
+              [hourSegments]="4"
+              [viewDate]="viewDate"
+            >
+            </mwl-calendar-day-view>
           </div>
-        </ng-template>
-
-
-        <ng-template
-          #marker
-        >
-        </ng-template>
-
-        <mwl-calendar-day-view
-          [currentTimeMarkerTemplate]="marker"
-          [dayEndHour]="getEndHour()"
-          [dayEndMinute]="getEndMinute()"
-          [dayStartHour]="getStartHour()"
-          [dayStartMinute]="getStartMinute()"
-          [events]="events"
-          [hourSegmentTemplate]="dayViewHourSegmentTemplate"
-          [hourSegments]="4"
-          [viewDate]="viewDate"
-        >
-        </mwl-calendar-day-view>
-
+        </div>
       </div>
     </div>
-
   </ng-template>
-
 </div>
