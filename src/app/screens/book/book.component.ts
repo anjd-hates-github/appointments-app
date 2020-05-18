@@ -89,7 +89,7 @@ export class BookComponent implements OnInit {
   // selectedTimezone: string = 'Europe/London';
   events: CalendarEvent[] = [];
   workingHours: WorkingHoursModel = null;
-  dragToSelectEvent: CalendarEvent = null;
+  selectedAppointment: CalendarEvent = null;
   expertId: number;
   name: string = '';
   isBooking: boolean = false
@@ -136,11 +136,11 @@ export class BookComponent implements OnInit {
       return;
     }
 
-    if (this.dragToSelectEvent != null) {
+    if (this.selectedAppointment != null) {
       this.events.pop();
     }
 
-    this.dragToSelectEvent = {
+    this.selectedAppointment = {
       id: this.events.length,
       title: this.name,
       start: start,
@@ -151,7 +151,7 @@ export class BookComponent implements OnInit {
       },
     };
 
-    this.events = [...this.events, this.dragToSelectEvent];
+    this.events = [...this.events, this.selectedAppointment];
 
     const segmentPosition = segmentElement.getBoundingClientRect();
     this.dragToCreateActive = true;
@@ -164,11 +164,11 @@ export class BookComponent implements OnInit {
     fromEvent(document, 'mousemove')
       .pipe(
         finalize(() => {
-          if (this.dragToSelectEvent != null && this.isOverlapping()) {
+          if (this.selectedAppointment != null && this.isOverlapping()) {
             this.stopDragging(mouseDownEvent);
           }
 
-          delete this.dragToSelectEvent?.meta?.tmpEvent;
+          delete this.selectedAppointment?.meta?.tmpEvent;
           this.dragToCreateActive = false;
           this.refresh();
         }),
@@ -216,12 +216,12 @@ export class BookComponent implements OnInit {
   }
 
   bookAppointment() {
-    let london = moment(this.dragToSelectEvent.start).tz(this.selectedTimezone, true);
+    let london = moment(this.selectedAppointment.start).tz(this.selectedTimezone, true);
     let start = london.tz(moment.tz.guess());
 
     let appointment: BookAppointmentModel = {
       starts_at: start.toDate(),
-      duration: moment(this.dragToSelectEvent.end).diff(moment(this.dragToSelectEvent.start), 'minutes'),
+      duration: moment(this.selectedAppointment.end).diff(moment(this.selectedAppointment.start), 'minutes'),
       user_name: this.name,
       expert_id: this.expertId,
     };
@@ -283,7 +283,7 @@ export class BookComponent implements OnInit {
       (workingHoursModel, appointments) => ({workingHoursModel, appointments})
     )
       .subscribe((pair) => {
-        this.dragToSelectEvent = null;
+        this.selectedAppointment = null;
 
         this.workingHours = pair.workingHoursModel;
         this.events = pair.appointments;
@@ -307,15 +307,15 @@ export class BookComponent implements OnInit {
   }
 
   canBook() {
-    return this.dragToSelectEvent !== null && this.name != null && this.name.length > 6;
+    return this.selectedAppointment !== null && this.name != null && this.name.length > 6;
   }
 
   updateNameOfEvent() {
-    if (!this.dragToSelectEvent) {
+    if (!this.selectedAppointment) {
       return;
     }
 
-    this.dragToSelectEvent.title = this.name;
+    this.selectedAppointment.title = this.name;
   }
 
   private getNow() {
@@ -333,7 +333,7 @@ export class BookComponent implements OnInit {
     const newEnd = addMinutes(segment.date, minutesDiff);
 
     if (newEnd > segment.date && newEnd < endOfView) {
-      this.dragToSelectEvent.end = newEnd;
+      this.selectedAppointment.end = newEnd;
 
       if (this.isOverlapping()) {
         this.stopDragging(mouseDownEvent);
@@ -346,12 +346,12 @@ export class BookComponent implements OnInit {
   }
 
   private isDraggingToDifferentDay() {
-    return this.dragToSelectEvent.end.getDate() != this.dragToSelectEvent.start.getDate();
+    return this.selectedAppointment.end.getDate() != this.selectedAppointment.start.getDate();
   }
 
   private stopDragging(mouseDownEvent: MouseEvent) {
     this.events.pop();
-    this.dragToSelectEvent = null;
+    this.selectedAppointment = null;
 
     mouseDownEvent.target.dispatchEvent(
       new MouseEvent('mouseup', {
@@ -367,8 +367,8 @@ export class BookComponent implements OnInit {
     let filteredEvents = [...this.events];
     filteredEvents.pop();
 
-    let draggedStart = this.dragToSelectEvent.start.getTime();
-    let draggedEnd = this.dragToSelectEvent.end.getTime();
+    let draggedStart = this.selectedAppointment.start.getTime();
+    let draggedEnd = this.selectedAppointment.end.getTime();
 
     return filteredEvents
       .filter(

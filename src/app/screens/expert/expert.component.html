@@ -29,7 +29,9 @@
         <mat-card-content class="card-content">
           {{expert.country_name}}
           <br>
-          {{expert.working_hours.starts_at}} -> {{expert.working_hours.ends_at}}
+          <br>
+          <br>
+          Working hours: {{startsAt | date:'shortTime'}} -> {{endsAt | date:'shortTime'}}
         </mat-card-content>
         <mat-card-actions class="card-actions">
           <a [routerLink]="['/book', expert.id]">

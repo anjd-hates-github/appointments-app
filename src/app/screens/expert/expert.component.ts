@@ -2,6 +2,11 @@ import {Component, OnInit} from '@angular/core';
 import {ExpertModel} from "../../models/expert.model";
 import {ActivatedRoute} from "@angular/router";
 import {ExpertsService} from "../../services/experts.service";
+import * as moment from 'moment';
+
+function timeStringToDate(time: string) {
+  return moment(time, 'HH:mm:ss').toDate();
+}
 
 @Component({
   selector: 'app-expert',
@@ -13,6 +18,14 @@ export class ExpertComponent implements OnInit {
   public isLoading: boolean = true;
 
   constructor(public route: ActivatedRoute, public expertsService: ExpertsService) {
+  }
+
+  public get startsAt() {
+    return timeStringToDate(this.expert.working_hours.starts_at);
+  }
+
+  public get endsAt() {
+    return timeStringToDate(this.expert.working_hours.ends_at);
   }
 
   ngOnInit(): void {
