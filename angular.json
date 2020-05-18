@@ -34,7 +34,7 @@
             ],
             "scripts": [
               "./node_modules/three/build/three.min.js",
-              "./node_modules/vanta/dist/vanta.halo.min.js"
+              "./node_modules/vanta/dist/vanta.waves.min.js"
             ]
           },
           "configurations": {
@@ -103,7 +103,7 @@
             ],
             "scripts": [
               "./node_modules/three/build/three.min.js",
-              "./node_modules/vanta/dist/vanta.halo.min.js"
+              "./node_modules/vanta/dist/vanta.waves.min.js"
             ]
           }
         },

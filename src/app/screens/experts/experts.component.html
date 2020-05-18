@@ -1,16 +1,23 @@
 <div class="container">
-  <div *ngIf="isLoading; else loaded" fxFlex fxLayout="row" fxLayoutAlign="space-around center">
-    <mat-progress-spinner mode="indeterminate">
-    </mat-progress-spinner>
-  </div>
+  <div fxFlex fxLayout="column">
 
-
-  <ng-template #loaded>
-    <div fxFlex fxFlexOffset="1%" fxLayout="row" fxLayout.sm="column" fxLayout.xs="column"
-         fxLayoutAlign="space-around center">
-      <div *ngFor="let expert of experts" fxFlex="30">
-        <app-expert-digest [expert]="expert"></app-expert-digest>
-      </div>
+    <div fxFlex fxLayout="row" fxLayoutAlign="space-around center">
+      <img alt="BeInMedia" class="responsive" src="assets/unnamed.png">
     </div>
-  </ng-template>
+
+    <div *ngIf="isLoading; else loaded" fxFlex fxLayout="row" fxLayoutAlign="space-around center">
+      <mat-progress-spinner mode="indeterminate">
+      </mat-progress-spinner>
+    </div>
+
+
+    <ng-template #loaded>
+      <div fxFlex fxFlexOffset="1%" fxLayout="row" fxLayout.sm="column" fxLayout.xs="column"
+           fxLayoutAlign="space-around center">
+        <div *ngFor="let expert of experts" fxFlex="30">
+          <app-expert-digest [expert]="expert"></app-expert-digest>
+        </div>
+      </div>
+    </ng-template>
+  </div>
 </div>

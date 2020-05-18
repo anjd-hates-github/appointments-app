@@ -8,5 +8,15 @@
 @import './scss/variables';
 @import './scss/theme';
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+canvas {
+  z-index: -1 !important;
+}
