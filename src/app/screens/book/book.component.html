@@ -38,9 +38,16 @@
             </mat-select>
           </mat-form-field>
 
-          <div *ngIf="selectedAppointment">
-
+          <div *ngIf="selectedAppointment" class="appointment-time">
+            <p>
+              Your appointment will be on {{selectedAppointment.start | date: "d MMM yyyy"}}
+            </p>
+            <p *ngIf="selectedAppointment.end && selectedAppointment.start">
+              from {{from | date: 'shortTime'}} to {{to | date: 'shortTime'}}
+            </p>
           </div>
+
+          <br>
 
           <div>
             <button (click)="bookAppointment()" [disabled]="!canBook() || isBooking" mat-button>

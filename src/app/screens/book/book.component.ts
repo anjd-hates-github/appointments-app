@@ -125,6 +125,14 @@ export class BookComponent implements OnInit {
     return this.maxDate.getMinutes();
   }
 
+  public get from(): Date {
+    return this.selectedAppointment.start;
+  }
+
+  public get to(): Date {
+    return this.selectedAppointment.end;
+  }
+
   timezoneChanged(val: string) {
     this.selectedTimezone = val;
     this.now = momentTzToDate(moment().tz(this.selectedTimezone));
