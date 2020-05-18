@@ -23,6 +23,13 @@ import {
 } from "../../helpers/date_helper";
 import {ceilToNearest} from "../../helpers/math_helper";
 
+interface HTMLElement extends Element, ElementCSSInlineStyle {
+  ontouchstart: (ev: TouchEvent) => any;
+  ontouchmove: (ev: TouchEvent) => any;
+  ontouchend: (ev: TouchEvent) => any;
+  ontouchcancel: (ev: TouchEvent) => any;
+}
+
 @Injectable()
 export class CustomEventTitleFormatter extends CalendarEventTitleFormatter {
   weekTooltip(event: CalendarEvent, title: string) {
@@ -69,13 +76,18 @@ export class BookComponent implements OnInit {
   minDate: Date;
   maxDate: Date;
   selectedTimezone: string;
-  // selectedTimezone: string = 'Europe/London';
   events: CalendarEvent[] = [];
   workingHours: WorkingHoursModel = null;
   selectedAppointment: CalendarEvent = null;
   expertId: number;
   name: string = '';
   isBooking: boolean = false
+  durations: number[] = [
+    15,
+    30,
+    45,
+    60
+  ];
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -131,6 +143,10 @@ export class BookComponent implements OnInit {
 
   public get to(): Date {
     return this.selectedAppointment.end;
+  }
+
+  touchStart(event) {
+    console.log(event);
   }
 
   timezoneChanged(val: string) {
@@ -298,6 +314,31 @@ export class BookComponent implements OnInit {
     }
 
     this.selectedAppointment.title = this.name;
+  }
+
+  precisionChanged($event: any) {
+    if (!this.selectedAppointment?.start) {
+      return;
+    }
+    console.log(this.precision);
+    this.selectedAppointment = {
+      ...this.selectedAppointment,
+      end: addMinutes(this.selectedAppointment.start, this.precision)
+    };
+
+    this.events.pop();
+    if (this.isOverlapping()) {
+      this.selectedAppointment = null;
+      this.events = [
+        ...this.events
+      ];
+      return;
+    }
+
+    this.events = [
+      ...this.events,
+      this.selectedAppointment,
+    ];
   }
 
   private updateDraggedEvent(mouseMoveEvent: MouseEvent, segmentPosition: DOMRect, segment: WeekViewHourSegment, endOfView: Date, mouseDownEvent: MouseEvent) {

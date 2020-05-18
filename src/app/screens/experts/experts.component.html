@@ -12,7 +12,7 @@
 
 
     <ng-template #loaded>
-      <div fxFlex fxFlexOffset="1%" fxLayout="row" fxLayout.sm="column" fxLayout.xs="column"
+      <div fxFlex fxFlexOffset="1%" fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutGap="5%"
            fxLayoutAlign="space-around center">
         <div *ngFor="let expert of experts" fxFlex="30">
           <app-expert-digest [expert]="expert"></app-expert-digest>

@@ -19,7 +19,7 @@
 
   <ng-template #appointmentsCard>
     <div class="container" fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutAlign="center start"
-         fxLayoutGap="5%">
+         fxLayoutAlign.lt-sm="center center" fxLayoutAlign.sm="center center" fxLayoutGap="5%">
       <div fxFlex="45" fxFlex.sm="100">
         <div class="container" fxLayout="column" fxLayoutAlign="center center">
           <mat-form-field fxFill>
@@ -71,6 +71,19 @@
               <mat-datepicker-toggle [for]="picker" matSuffix></mat-datepicker-toggle>
               <mat-datepicker #picker></mat-datepicker>
             </mat-form-field>
+          </div>
+
+          <div>
+            <mat-form-field>
+              <mat-label>Choose a duration</mat-label>
+
+              <mat-select [(value)]="this.precision" (valueChange)="precisionChanged($event)">
+                <mat-option *ngFor="let duration of durations" [value]="duration">
+                  {{duration}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
           </div>
 
 
