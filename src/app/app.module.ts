@@ -3,13 +3,13 @@ import {NgModule} from '@angular/core';
 
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
-import {ExpertsComponent} from './experts/experts.component';
-import {ExpertComponent} from './expert/expert.component';
+import {ExpertsComponent} from './screens/experts/experts.component';
+import {ExpertComponent} from './screens/expert/expert.component';
 import {MatGridListModule} from "@angular/material/grid-list";
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {BookComponent} from './book/book.component';
-import {ExpertDigestComponent} from './expert-digest/expert-digest.component';
+import {BookComponent} from './screens/book/book.component';
+import {ExpertDigestComponent} from './components/expert-digest/expert-digest.component';
 import {HttpClientModule} from "@angular/common/http";
 import {MatCardModule} from "@angular/material/card";
 import {MatButtonModule} from "@angular/material/button";

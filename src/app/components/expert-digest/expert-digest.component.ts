@@ -1,5 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {ExpertModel} from "../models/expert.model";
+import {ExpertModel} from "../../models/expert.model";
 
 @Component({
   selector: 'app-expert-digest',

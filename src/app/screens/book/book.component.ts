@@ -6,12 +6,12 @@ import {CalendarEventTitleFormatter} from "angular-calendar";
 import {fromEvent, zip} from "rxjs";
 import {finalize, map, takeUntil} from "rxjs/operators";
 import {addMinutes, endOfWeek} from 'date-fns';
-import {ExpertsService} from "../services/experts.service";
-import {AppointmentsService} from "../services/appointments.service";
+import {ExpertsService} from "../../services/experts.service";
+import {AppointmentsService} from "../../services/appointments.service";
 import {ActivatedRoute} from "@angular/router";
-import {AppointmentModel} from "../models/appointment.model";
-import {WorkingHoursModel} from "../models/working-hours.model";
-import {BookAppointmentModel} from "../models/book-appointment.model";
+import {AppointmentModel} from "../../models/appointment.model";
+import {WorkingHoursModel} from "../../models/working-hours.model";
+import {BookAppointmentModel} from "../../models/book-appointment.model";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Moment} from "moment-timezone/moment-timezone";
 

@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
-import {ExpertModel} from "../models/expert.model";
-import {ExpertsService} from "../services/experts.service";
+import {ExpertModel} from "../../models/expert.model";
+import {ExpertsService} from "../../services/experts.service";
 import {catchError} from "rxjs/operators";
 
 @Component({
