@@ -60,7 +60,7 @@
           <div>
             <mat-form-field>
               <mat-label>Choose a date</mat-label>
-              <input [(ngModel)]="this.viewDate" [matDatepicker]="picker" matInput [min]="now">
+              <input [(ngModel)]="this.viewDate" [matDatepicker]="picker" [min]="now" matInput>
               <mat-datepicker-toggle [for]="picker" matSuffix></mat-datepicker-toggle>
               <mat-datepicker #picker></mat-datepicker>
             </mat-form-field>
@@ -115,10 +115,10 @@
 
             <mwl-calendar-day-view
               [currentTimeMarkerTemplate]="marker"
-              [dayEndHour]="getEndHour()"
-              [dayEndMinute]="getEndMinute()"
-              [dayStartHour]="getStartHour()"
-              [dayStartMinute]="getStartMinute()"
+              [dayEndHour]="endHour"
+              [dayEndMinute]="endMinute"
+              [dayStartHour]="startHour"
+              [dayStartMinute]="startMinute"
               [events]="events"
               [hourSegmentTemplate]="dayViewHourSegmentTemplate"
               [hourSegments]="4"

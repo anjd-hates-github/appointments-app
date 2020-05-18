@@ -13,24 +13,15 @@ import {AppointmentModel} from "../../models/appointment.model";
 import {WorkingHoursModel} from "../../models/working-hours.model";
 import {BookAppointmentModel} from "../../models/book-appointment.model";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {Moment} from "moment-timezone/moment-timezone";
-import {ImageUtils} from "three";
-import getDataURL = ImageUtils.getDataURL;
-
-moment.tz.link('Europe/London');
-
-interface Duration {
-  value: number;
-  name: string;
-}
-
-function floorToNearest(amount: number, precision: number) {
-  return Math.floor(amount / precision) * precision;
-}
-
-function ceilToNearest(amount: number, precision: number) {
-  return Math.ceil(amount / precision) * precision;
-}
+import {
+  areSameDay,
+  getNow,
+  isAbsolutelyOlderInDays,
+  isDateAfter,
+  momentTzToDate,
+  timeToMoment
+} from "../../helpers/date_helper";
+import {ceilToNearest} from "../../helpers/math_helper";
 
 @Injectable()
 export class CustomEventTitleFormatter extends CalendarEventTitleFormatter {
@@ -45,14 +36,6 @@ export class CustomEventTitleFormatter extends CalendarEventTitleFormatter {
       return super.dayTooltip(event, title);
     }
   }
-}
-
-function isAbsolutelyOlderInDays(date1: Date, date2: Date) {
-  return date1.getDate() < date2.getDate() && date1.getFullYear() <= date2.getFullYear() && date1.getMonth() <= date2.getMonth();
-}
-
-function areSameDay(date1: Date, date2: Date) {
-  return date1.getDate() == date2.getDate() && date1.getMonth() == date2.getMonth() && date1.getFullYear() == date2.getFullYear();
 }
 
 @Component({
@@ -106,6 +89,42 @@ export class BookComponent implements OnInit {
     this.viewDate = momentTzToDate(moment().tz(this.selectedTimezone));
   }
 
+  get startHour() {
+    let now = getNow(this.selectedTimezone);
+
+    if (isAbsolutelyOlderInDays(this.viewDate, now)) {
+      return this.maxDate.getHours();
+    }
+
+    if (areSameDay(this.viewDate, now) && this.minDate < now) {
+      return now.getHours();
+    }
+
+    return this.minDate.getHours();
+  }
+
+  get startMinute() {
+    let now = getNow(this.selectedTimezone);
+
+    if (isAbsolutelyOlderInDays(this.viewDate, now)) {
+      return 0;
+    }
+
+    if (areSameDay(this.viewDate, now) && this.minDate < now) {
+      return now.getMinutes();
+    }
+
+    return this.minDate.getMinutes();
+  }
+
+  get endHour() {
+    return this.maxDate.getHours();
+  }
+
+  get endMinute() {
+    return this.maxDate.getMinutes();
+  }
+
   timezoneChanged(val: string) {
     this.selectedTimezone = val;
     this.now = momentTzToDate(moment().tz(this.selectedTimezone));
@@ -128,11 +147,11 @@ export class BookComponent implements OnInit {
   ) {
     let start = segment.date;
 
-    if (isAfter(this.minDate, start)) {
+    if (isDateAfter(this.minDate, start)) {
       return;
     }
 
-    if (isAfter(start, this.maxDate)) {
+    if (isDateAfter(start, this.maxDate)) {
       return;
     }
 
@@ -177,42 +196,6 @@ export class BookComponent implements OnInit {
       .subscribe((mouseMoveEvent: MouseEvent) => {
         this.updateDraggedEvent(mouseMoveEvent, segmentPosition, segment, endOfView, mouseDownEvent);
       });
-  }
-
-  getStartHour() {
-    let now = this.getNow();
-
-    if (isAbsolutelyOlderInDays(this.viewDate, now)) {
-      return this.maxDate.getHours();
-    }
-
-    if (areSameDay(this.viewDate, now) && this.minDate < now) {
-      return now.getHours();
-    }
-
-    return this.minDate.getHours();
-  }
-
-  getStartMinute() {
-    let now = this.getNow();
-
-    if (isAbsolutelyOlderInDays(this.viewDate, now)) {
-      return 0;
-    }
-
-    if (areSameDay(this.viewDate, now) && this.minDate < now) {
-      return now.getMinutes();
-    }
-
-    return this.minDate.getMinutes();
-  }
-
-  getEndHour() {
-    return this.maxDate.getHours();
-  }
-
-  getEndMinute() {
-    return this.maxDate.getMinutes();
   }
 
   bookAppointment() {
@@ -288,22 +271,13 @@ export class BookComponent implements OnInit {
         this.workingHours = pair.workingHoursModel;
         this.events = pair.appointments;
 
-        this.minDate = this.timeToMoment(this.workingHours.starts_at);
-        this.maxDate = this.timeToMoment(this.workingHours.ends_at);
+        this.minDate = timeToMoment(this.workingHours.starts_at, this.selectedTimezone);
+        this.maxDate = timeToMoment(this.workingHours.ends_at, this.selectedTimezone);
 
         this.isLoading = false;
       }, (error) => {
         this.error = error;
       });
-  }
-
-  timeToMoment(time: string) {
-    let day = moment().tz(this.selectedTimezone);
-
-    let splitTime = time.split(/:/)
-    day.hours(parseInt(splitTime[0])).minutes(parseInt(splitTime[1])).seconds(parseInt(splitTime[2])).milliseconds(0);
-
-    return momentTzToDate(day);
   }
 
   canBook() {
@@ -316,10 +290,6 @@ export class BookComponent implements OnInit {
     }
 
     this.selectedAppointment.title = this.name;
-  }
-
-  private getNow() {
-    return momentTzToDate(moment().tz(this.selectedTimezone));
   }
 
   private updateDraggedEvent(mouseMoveEvent: MouseEvent, segmentPosition: DOMRect, segment: WeekViewHourSegment, endOfView: Date, mouseDownEvent: MouseEvent) {
@@ -343,10 +313,6 @@ export class BookComponent implements OnInit {
     }
 
     this.refresh();
-  }
-
-  private isDraggingToDifferentDay() {
-    return this.selectedAppointment.end.getDate() != this.selectedAppointment.start.getDate();
   }
 
   private stopDragging(mouseDownEvent: MouseEvent) {
@@ -386,31 +352,3 @@ export class BookComponent implements OnInit {
   }
 }
 
-
-function isAfter(date1: Date, date2: Date) {
-  if (date1.getHours() > date2.getHours()) {
-    return true;
-  }
-
-  if (date1.getHours() < date2.getHours()) {
-    return false;
-  }
-
-  if (date1.getMinutes() > date2.getMinutes()) {
-    return true;
-  }
-
-  if (date1.getMinutes() < date2.getMinutes()) {
-    return false;
-  }
-
-  return date1.getSeconds() > date2.getSeconds();
-}
-
-function areDatesEqual(date1: Date, date2: Date) {
-  return date1.getDay() === date2.getDay() && date1.getMonth() == date2.getMonth() && date1.getFullYear() === date2.getFullYear();
-}
-
-function momentTzToDate(moment: Moment) {
-  return new Date(moment.year(), moment.month(), moment.date(), moment.hours(), moment.minutes(), moment.seconds(), moment.milliseconds());
-}
