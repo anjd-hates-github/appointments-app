@@ -240,6 +240,7 @@ export class BookComponent implements OnInit {
     this.isBooking = true;
     this.appointmentsService.book(appointment).subscribe((msg) => {
       this.error = null;
+      this.name = '';
       this.isBooking = false;
       this._snackBar.open(msg.message, null, {
         duration: 5000,
