@@ -14,6 +14,8 @@ import {WorkingHoursModel} from "../../models/working-hours.model";
 import {BookAppointmentModel} from "../../models/book-appointment.model";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Moment} from "moment-timezone/moment-timezone";
+import {ImageUtils} from "three";
+import getDataURL = ImageUtils.getDataURL;
 
 moment.tz.link('Europe/London');
 
@@ -43,6 +45,14 @@ export class CustomEventTitleFormatter extends CalendarEventTitleFormatter {
       return super.dayTooltip(event, title);
     }
   }
+}
+
+function isAbsolutelyOlderInDays(date1: Date, date2: Date) {
+  return date1.getDate() < date2.getDate() && date1.getFullYear() <= date2.getFullYear() && date1.getMonth() <= date2.getMonth();
+}
+
+function areSameDay(date1: Date, date2: Date) {
+  return date1.getDate() == date2.getDate() && date1.getMonth() == date2.getMonth() && date1.getFullYear() == date2.getFullYear();
 }
 
 @Component({
@@ -82,6 +92,7 @@ export class BookComponent implements OnInit {
   dragToSelectEvent: CalendarEvent = null;
   expertId: number;
   name: string = '';
+  isBooking: boolean = false
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -171,7 +182,11 @@ export class BookComponent implements OnInit {
   getStartHour() {
     let now = this.getNow();
 
-    if (this.minDate < now) {
+    if (isAbsolutelyOlderInDays(this.viewDate, now)) {
+      return this.maxDate.getHours();
+    }
+
+    if (areSameDay(this.viewDate, now) && this.minDate < now) {
       return now.getHours();
     }
 
@@ -181,7 +196,11 @@ export class BookComponent implements OnInit {
   getStartMinute() {
     let now = this.getNow();
 
-    if (this.minDate < now) {
+    if (isAbsolutelyOlderInDays(this.viewDate, now)) {
+      return 0;
+    }
+
+    if (areSameDay(this.viewDate, now) && this.minDate < now) {
       return now.getMinutes();
     }
 
@@ -189,24 +208,10 @@ export class BookComponent implements OnInit {
   }
 
   getEndHour() {
-    let now = this.getNow();
-
-
-    if (this.maxDate < now) {
-      return now.getHours();
-    }
-
     return this.maxDate.getHours();
   }
 
   getEndMinute() {
-    let now = this.getNow();
-
-
-    if (this.maxDate < now) {
-      return now.getMinutes();
-    }
-
     return this.maxDate.getMinutes();
   }
 
@@ -225,7 +230,10 @@ export class BookComponent implements OnInit {
       appointment.timezone = this.selectedTimezone;
     }
 
+    this.isBooking = true;
     this.appointmentsService.book(appointment).subscribe((msg) => {
+      this.error = null;
+      this.isBooking = false;
       this._snackBar.open(msg.message, null, {
         duration: 5000,
       });
@@ -233,6 +241,7 @@ export class BookComponent implements OnInit {
       this.loadData();
     }, (error) => {
       console.error(error);
+      this.isBooking = false;
       this.error = error.error.message;
     });
   }

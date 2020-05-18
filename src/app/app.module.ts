@@ -25,6 +25,7 @@ import {MatSnackBarModule} from "@angular/material/snack-bar";
 import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatInput, MatInputModule} from "@angular/material/input";
 import {FormsModule} from "@angular/forms";
+import {MatIconModule} from "@angular/material/icon";
 
 export function momentAdapterFactory() {
   return adapterFactory(moment);
@@ -38,27 +39,28 @@ export function momentAdapterFactory() {
     BookComponent,
     ExpertDigestComponent,
   ],
-  imports: [
-    LayoutModule,
-    BrowserModule,
-    AppRoutingModule,
-    MatGridListModule,
-    MatProgressSpinnerModule,
-    BrowserAnimationsModule,
-    HttpClientModule,
-    MatCardModule,
-    MatButtonModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatSnackBarModule,
-    MatFormFieldModule,
-    MatInputModule,
+    imports: [
+        LayoutModule,
+        BrowserModule,
+        AppRoutingModule,
+        MatGridListModule,
+        MatProgressSpinnerModule,
+        BrowserAnimationsModule,
+        HttpClientModule,
+        MatCardModule,
+        MatButtonModule,
+        MatSelectModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatSnackBarModule,
+        MatFormFieldModule,
+        MatInputModule,
 
-    FlexLayoutModule,
-    CalendarModule.forRoot({provide: DateAdapter, useFactory: momentAdapterFactory}),
-    FormsModule,
-  ],
+        FlexLayoutModule,
+        CalendarModule.forRoot({provide: DateAdapter, useFactory: momentAdapterFactory}),
+        FormsModule,
+        MatIconModule,
+    ],
   providers: [
     MatDatepickerModule,
     {provide: MAT_DATE_LOCALE, useValue: 'en-GB'},

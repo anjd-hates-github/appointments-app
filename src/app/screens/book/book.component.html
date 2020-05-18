@@ -1,6 +1,11 @@
 <div class="container" fxFlex fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="5%">
-  <div fxFlex="20">
-    <a routerLink="/experts">Back to experts</a>
+  <div fxFlex="20" fxFlexOffset="1%">
+    <a routerLink="/experts">
+      <button mat-button>
+        <mat-icon>arrow_back</mat-icon>
+        Back to experts
+      </button>
+    </a>
   </div>
 
   <div *ngIf="error" fxFlex="20">
@@ -13,7 +18,7 @@
   </div>
 
   <ng-template #appointmentsCard>
-    <div class="container" fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutAlign="center center"
+    <div class="container" fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutAlign="center start"
          fxLayoutGap="5%">
       <div fxFlex="45" fxFlex.sm="100">
         <div class="container" fxLayout="column" fxLayoutAlign="center center">
@@ -33,15 +38,35 @@
             </mat-select>
           </mat-form-field>
 
+          <div *ngIf="dragToSelectEvent">
+
+          </div>
+
           <div>
-            <button (click)="bookAppointment()" [disabled]="!canBook()" mat-button>Book</button>
-            <button (click)="loadData()" mat-button>Refresh</button>
+            <button (click)="bookAppointment()" [disabled]="!canBook() || isBooking" mat-button>
+              <mat-icon>book</mat-icon>
+              Book
+            </button>
+            <button (click)="loadData()" mat-button>
+              <mat-icon>refresh</mat-icon>
+              Refresh
+            </button>
           </div>
         </div>
       </div>
 
       <div fxFlex="45" fxFlex.sm="100">
         <div fxLayout="column" fxLayoutAlign="space-around center">
+          <div>
+            <mat-form-field>
+              <mat-label>Choose a date</mat-label>
+              <input [(ngModel)]="this.viewDate" [matDatepicker]="picker" matInput [min]="now">
+              <mat-datepicker-toggle [for]="picker" matSuffix></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+
           <div fxLayout="row" fxLayoutAlign="space-between center">
             <div>
               <button [(viewDate)]="viewDate" [view]="'day'" mat-button mwlCalendarPreviousView>Previous Day</button>
