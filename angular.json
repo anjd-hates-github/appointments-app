@@ -32,7 +32,10 @@
               "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "./node_modules/three/build/three.min.js",
+              "./node_modules/vanta/dist/vanta.halo.min.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -98,7 +101,10 @@
               "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "./node_modules/three/build/three.min.js",
+              "./node_modules/vanta/dist/vanta.halo.min.js"
+            ]
           }
         },
         "lint": {

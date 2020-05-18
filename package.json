@@ -31,7 +31,9 @@
     "moment-timezone": "^0.5.28",
     "path": "^0.12.7",
     "rxjs": "~6.5.4",
+    "three": "^0.116.1",
     "tslib": "^1.10.0",
+    "vanta": "^0.5.15",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {

@@ -1,16 +1,15 @@
 <div class="container">
-  <div fxLayout="row" fxLayoutAlign="center center">
-    <div *ngIf="isLoading">
-      <mat-progress-spinner mode="indeterminate">
-      </mat-progress-spinner>
-    </div>
-
-    <mat-grid-list cols="6" fxFill>
-      <mat-grid-tile
-        *ngFor="let expert of experts"
-        [rowspan]="1">
-        <app-expert-digest [expert]="expert"></app-expert-digest>
-      </mat-grid-tile>
-    </mat-grid-list>
+  <div *ngIf="isLoading; else loaded" fxFlex fxLayout="row" fxLayoutAlign="space-around center">
+    <mat-progress-spinner mode="indeterminate">
+    </mat-progress-spinner>
   </div>
+
+
+  <ng-template #loaded>
+    <div fxFlex fxLayout="row" fxLayout.sm="column" fxLayout.xs="column" fxLayoutAlign="space-around center">
+      <div *ngFor="let expert of experts" fxFlex="30">
+        <app-expert-digest [expert]="expert"></app-expert-digest>
+      </div>
+    </div>
+  </ng-template>
 </div>
